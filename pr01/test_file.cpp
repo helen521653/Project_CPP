@@ -1,53 +1,63 @@
 #include <iostream>
+#include <vector>
+#include <numeric>
+class Task
+{
+protected:
+    int cpuNum;
+    int size;
 
-class Storage
+public:
+    Task(int cpuNum, int size) {
+        this->cpuNum = cpuNum;
+        this->size = size;
+    }
+
+    // На каком ядре процессора выполняется задача
+    int getCPU() const {
+        return cpuNum;
+    }
+
+    // Оценка сложности задачи (в попугаях)
+    int getSize() const {
+        return size;
+    }
+};
+
+class Analyzer
 {
 public:
-    unsigned int n;
-    unsigned int* m;
+    std::vector < std::vector <int> > cores;
+    // Создать анализатор для системы с numCores ядер
+    Analyzer(int numCores) {
+        std::vector < std::vector <int> > cores(numCores);
 
-    // Конструктор хранилища размерности n
-    Storage(unsigned int n):n{n}, m{new unsigned int[n]}{};
+        //std::vector < std::vector <int> > cores(numCores, std::vector <int> core);
+    };
 
-    // Добавьте нужный деструктор
-    ~Storage(){delete []m;};
+    // Проанализировать текущие задачи
+    void analyze(const std::vector<Task>& tasks){
+        for(auto i = 0; i<tasks.size(); ++i){
+            cores[tasks[i].getCPU()].push_back(tasks[i].getSize());
+        };
+    };
 
-    // Получение размерности хранилища
-    unsigned getSize(){return n;};
-
-    // Получение значения i-го элемента из хранилища,
-    // i находится в диапазоне от 0 до n-1,
-    // случаи некорректных i можно не обрабатывать.
-    int getValue(unsigned int i) {return m[i];};
-
-    // Задание значения i-го элемента из хранилища равным value,
-    // i находится в диапазоне от 0 до n-1,
-    // случаи некорректных i можно не обрабатывать.
-    void setValue(unsigned int i, int value){m[i] = value;};
+    // Сообщить общую нагрузку на заданное ядро
+    int getLoadForCPU(int cpuNum){
+        return std::accumulate(cores[cpuNum].begin(), cores[cpuNum].end(), 0);
+    };
 };
 
-//Приблизительный код для тестирования реализованного класса:
 
-// Класс TestStorage, наследуется от вашей реализации Storage
-class TestStorage : public Storage {
-protected:
-    // Унаследованная реализация зачем-то хочет выделить ещё памяти. Имеет право.
-    int* more_data;
-
-public:
-    // В конструкторе память выделяется,
-    TestStorage(unsigned int n) : Storage(n) {
-        more_data = new int[n];
-    }
-    // ... а в деструкторе освобождается - всё честно.
-    ~TestStorage() {
-        delete[] more_data;
-    }
-};
-
-int main() {
-    Storage *ts = new TestStorage(42);
-    delete ts;
+int main()
+{
+    int numberOfCores = 4;
+    std::vector<Task> data = { {0, 1}, {1, 10}, {0, 6}, {2, 12}, {3, 5} };
+    Analyzer a(numberOfCores);
+    a.analyze(data);
+    for(int i = 0; i < numberOfCores; i++)
+        std::cout << a.cores.data() << std::endl;
+    for(int i = 0; i < numberOfCores; i++)
+        std::cout << a.getLoadForCPU(i) << std::endl;
     return 0;
 }
-
